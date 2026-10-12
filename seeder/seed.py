@@ -10,6 +10,7 @@ Env:
   EVENT_COUNT      (default 9000)                     # jumlah event traffic normal (noise)
   SCENARIO_DAY     (default 2026-10-10)               # tanggal insiden (UTC)
 """
+import base64
 import datetime as dt
 import json
 import os
@@ -310,8 +311,14 @@ AUTH_MAPPING = {
 # ----------------------------------------------------------------------------
 # HTTP HELPERS
 # ----------------------------------------------------------------------------
+_BASIC_AUTH = os.environ.get("BASIC_AUTH", "")  # "user:pass" -> header Authorization
+_AUTH_HEADER = ("Basic " + base64.b64encode(_BASIC_AUTH.encode()).decode()) if _BASIC_AUTH else None
+
+
 def req(method, url, data=None, ctype="application/json", extra_headers=None, timeout=120):
     headers = {"Content-Type": ctype}
+    if _AUTH_HEADER:
+        headers["Authorization"] = _AUTH_HEADER
     if extra_headers:
         headers.update(extra_headers)
     body = data.encode() if isinstance(data, str) else data
@@ -335,6 +342,40 @@ def wait_opensearch():
         time.sleep(2)
     log("ERROR: OpenSearch tidak siap.")
     return False
+
+
+def harden_security():
+    """Petakan user anonymous -> role READ-ONLY lewat Security REST API (sbg admin).
+    Dijalankan tiap start (idempoten via PUT). Anonymous dapat:
+      - readall        : baca semua index (termasuk data nusacommerce-*)
+      - kibana_user    : akses saved object/tenant (agar dashboard bisa DILIHAT)
+      - kibana_read_only : penanda read-only mode di Dashboards (blok tulis/edit/hapus)
+    Tulis ke data index tetap ditolak (readall hanya baca); tulis .kibana ditolak readonly_mode.
+    """
+    anon = "opendistro_security_anonymous_backendrole"
+    api = f"{OPENSEARCH_URL}/_plugins/_security/api"
+    # Role read-only: baca data + baca saved object Global tenant, TANPA izin tulis apa pun.
+    role = {
+        "cluster_permissions": ["cluster_composite_ops_ro", "cluster:monitor/*"],
+        "index_permissions": [
+            {"index_patterns": ["nusacommerce-*"],
+             "allowed_actions": ["read", "indices:data/read/*", "indices:monitor/*",
+                                 "indices:admin/mappings/get", "indices:admin/mappings/fields/get*",
+                                 "indices:admin/get", "indices:admin/aliases/get", "indices:admin/resolve/index"]},
+            {"index_patterns": [".kibana", ".kibana_*", ".opensearch_dashboards", ".opensearch_dashboards_*"],
+             "allowed_actions": ["read", "indices:data/read/*", "indices:admin/mappings/get",
+                                 "indices:admin/get", "indices:admin/aliases/get"]},
+        ],
+        "tenant_permissions": [
+            {"tenant_patterns": ["global_tenant"], "allowed_actions": ["kibana_all_read"]},
+        ],
+    }
+    code, resp = req("PUT", f"{api}/roles/soc_viewer", json.dumps(role))
+    log(f"  role soc_viewer: HTTP {code} {'OK' if code in (200,201) else resp[:160]}")
+    for r, body in [("soc_viewer", {"backend_roles": [anon]}),
+                    ("kibana_read_only", {"backend_roles": [anon]})]:
+        code, resp = req("PUT", f"{api}/rolesmapping/{r}", json.dumps(body))
+        log(f"  rolesmapping {r}: HTTP {code} {'OK' if code in (200,201) else resp[:160]}")
 
 
 def recreate_index(name, mapping):
@@ -453,7 +494,8 @@ def vs_table(title, bucket_fields):
 
 
 def setup_dashboards():
-    hdr = {"osd-xsrf": "true"}
+    # securitytenant: global -> saved object disimpan di Global tenant (dibaca anonymous)
+    hdr = {"osd-xsrf": "true", "securitytenant": "global"}
     log(f"menunggu Dashboards di {DASHBOARDS_URL} ...")
     ready = False
     for _ in range(120):
@@ -556,6 +598,9 @@ def build_all():
 def main():
     if not wait_opensearch():
         sys.exit(1)
+    if _BASIC_AUTH:
+        log("mengatur akses anonymous read-only (Security REST API) ...")
+        harden_security()
     log("membangun dataset ...")
     web, auth = build_all()
     log(f"web-access={len(web)} auth={len(auth)}")

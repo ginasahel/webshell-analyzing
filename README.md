@@ -51,7 +51,7 @@ pakai **Discover** untuk query manual (DQL).
 ```
 Build pertama mengunduh ~1 GB (tarball OpenSearch+Dashboards), butuh beberapa
 menit. Sediakan **±2 GB RAM**. `setup.sh` otomatis menaikkan `vm.max_map_count`
-dan memakai `sudo docker` bila perlu. Tidak perlu login ke Dashboards.
+dan memakai `sudo docker` bila perlu. Peserta masuk tanpa login sebagai **anonymous read-only**.
 
 ---
 
@@ -92,7 +92,17 @@ git push -u origin main
 https://hack.redlimit.id/soc-lab**, bukan di lab. Kunci jawaban + query
 pembuktian + penjelasan red herring ada di `SOLUTION.md`.
 
-## Keamanan
-Security plugin OpenSearch **dinonaktifkan** agar lab mudah dipakai — **jangan**
-untuk produksi/data nyata. Tidak ada web shell sungguhan: hanya **jejak log**
-simulasi untuk latihan deteksi (defensif).
+## Akses & keamanan
+- **Peserta = anonymous READ-ONLY.** Security plugin OpenSearch AKTIF. Pengunjung
+  masuk tanpa login (anonymous), dipetakan ke role read-only (`soc_viewer` +
+  Global tenant `kibana_all_read`). Mereka bisa melihat dashboard & query bebas di
+  Discover, tapi **tidak bisa menulis/menghapus data, dashboard, maupun visualisasi**
+  — via UI, API saved-object, maupun Dev Tools. Jadi satu peserta iseng tidak bisa
+  merusak lab untuk yang lain.
+- **Admin internal.** OpenSearch REST (`:9200`) memakai user `admin`/`admin` &
+  `kibanaserver`/`kibanaserver` (kredensial demo) — **tidak diekspos ke publik**
+  (hanya dipakai di dalam container; yang terekspos hanya Dashboards). Seeder
+  memakai admin untuk memuat data & membuat dashboard.
+- **REST tanpa TLS, transport TLS self-signed** (internal). HTTPS publik ditangani
+  ngelinx. Lab ini untuk **latihan** — jangan untuk produksi/data nyata.
+- Tidak ada web shell sungguhan: hanya **jejak log** simulasi untuk latihan deteksi.

@@ -19,7 +19,7 @@ services:
         hard: 65536
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "curl -sf http://localhost:5601/api/status >/dev/null || exit 1"]
+      test: ["CMD-SHELL", "curl -sf -u admin:admin http://localhost:5601/api/status >/dev/null || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 20

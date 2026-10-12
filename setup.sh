@@ -27,7 +27,7 @@ $DOCKER compose up -d --build
 echo -n "[*] menunggu Dashboards siap di http://localhost:${PORT} "
 ok=0
 for _ in $(seq 1 120); do
-  if curl -sf "http://localhost:${PORT}/api/status" >/dev/null 2>&1; then ok=1; echo " OK"; break; fi
+  if curl -sf -u admin:admin "http://localhost:${PORT}/api/status" >/dev/null 2>&1; then ok=1; echo " OK"; break; fi
   printf '.'; sleep 5
 done
 

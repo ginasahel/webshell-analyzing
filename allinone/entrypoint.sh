@@ -21,10 +21,10 @@ log "menjalankan OpenSearch ..."
 /usr/share/opensearch/bin/opensearch > /tmp/opensearch.log 2>&1 &
 OS_PID=$!
 
-log "menunggu OpenSearch ..."
+log "menunggu OpenSearch (security aktif, auth admin) ..."
 up=0
-for i in $(seq 1 90); do
-  if curl -s http://localhost:9200 >/dev/null 2>&1; then up=1; log "OpenSearch up."; break; fi
+for i in $(seq 1 120); do
+  if curl -s -u admin:admin http://localhost:9200/_cluster/health >/dev/null 2>&1; then up=1; log "OpenSearch up."; break; fi
   if ! kill -0 "$OS_PID" 2>/dev/null; then log "ERROR: OpenSearch mati."; tail -n 40 /tmp/opensearch.log; exit 1; fi
   sleep 2
 done
@@ -40,6 +40,7 @@ OSD_PID=$!
 log "seeding data (${EVENT_COUNT:-9000} event noise) + dashboard ..."
 OPENSEARCH_URL="http://localhost:9200" \
 DASHBOARDS_URL="http://localhost:${PORT}" \
+BASIC_AUTH="admin:admin" \
 EVENT_COUNT="${EVENT_COUNT:-9000}" \
 SCENARIO_DAY="${SCENARIO_DAY:-2026-10-10}" \
   python3 /opt/seeder/seed.py || log "WARN: seeder error (lihat di atas)."

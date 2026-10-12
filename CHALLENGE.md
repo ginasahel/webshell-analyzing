@@ -7,7 +7,7 @@ asing muncul di folder `uploads`. Dugaan: **seseorang berhasil menanam web shell
 PHP** dan bisa menjalankan perintah di server. Bongkar rantai serangannya.
 
 ## Lingkungan (lab)
-- Buka **OpenSearch Dashboards** (URL lab dari instruktur). Tanpa login.
+- Buka **OpenSearch Dashboards** (URL lab dari instruktur). Tanpa login (akses **read-only** — kamu bisa melihat & query, tapi tidak bisa mengubah apa pun).
 - Saat dibuka, dashboard **"SOC Lab — Investigasi Web Shell"** tampil otomatis
   (timeline, top IP, status code, tabel file `.php` di `/uploads`, login gagal, dst).
 - Butuh query manual? Buka menu **Discover**.
