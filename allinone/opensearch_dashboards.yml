@@ -14,8 +14,10 @@ opensearch_security.multitenancy.enabled: true
 opensearch_security.multitenancy.tenants.enable_global: true
 opensearch_security.multitenancy.tenants.enable_private: false
 opensearch_security.multitenancy.tenants.preferred: ["Global"]
-# readonly_mode menyembunyikan tombol tulis di UI (penegakan sebenarnya dari role)
-opensearch_security.readonly_mode.roles: ["kibana_read_only"]
+# CATATAN: readonly_mode SENGAJA TIDAK dipakai — fitur itu menyembunyikan seluruh
+# sidebar/menu sehingga peserta tak bisa eksplorasi. Penegakan read-only cukup dari
+# role (Global tenant kibana_all_read, tanpa izin tulis). Semua menu tetap muncul;
+# percobaan simpan/hapus akan ditolak 403.
 opensearch_security.cookie.secure: false
 opensearch_security.cookie.password: "soc-lab-cookie-encryption-key-min-32-chars-xyz"
 

@@ -372,10 +372,8 @@ def harden_security():
     }
     code, resp = req("PUT", f"{api}/roles/soc_viewer", json.dumps(role))
     log(f"  role soc_viewer: HTTP {code} {'OK' if code in (200,201) else resp[:160]}")
-    for r, body in [("soc_viewer", {"backend_roles": [anon]}),
-                    ("kibana_read_only", {"backend_roles": [anon]})]:
-        code, resp = req("PUT", f"{api}/rolesmapping/{r}", json.dumps(body))
-        log(f"  rolesmapping {r}: HTTP {code} {'OK' if code in (200,201) else resp[:160]}")
+    code, resp = req("PUT", f"{api}/rolesmapping/soc_viewer", json.dumps({"backend_roles": [anon]}))
+    log(f"  rolesmapping soc_viewer: HTTP {code} {'OK' if code in (200,201) else resp[:160]}")
 
 
 def recreate_index(name, mapping):
