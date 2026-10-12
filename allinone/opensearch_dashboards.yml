@@ -1,0 +1,6 @@
+server.host: "0.0.0.0"
+server.port: 5601
+opensearch.hosts: ["http://localhost:9200"]
+opensearch_security.enabled: false
+# Begitu dibuka, langsung tampilkan dashboard investigasi siap-pakai
+uiSettings.overrides.defaultRoute: "/app/dashboards#/view/soc-webshell-dashboard"
